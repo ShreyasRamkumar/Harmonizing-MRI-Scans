@@ -1,0 +1,4 @@
+torchio
+simpleitk
+nibabel
+dipy
