@@ -157,4 +157,5 @@ cython_debug/
 test.py
 test2.py 
 test3.py
-.vscode/
+Dockerfile
+test_scans/
