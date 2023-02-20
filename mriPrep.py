@@ -55,9 +55,6 @@ class Preprocessing:
         image = nib.load("./bixed.nii")
         stripped, mask = robex(image)
         sitk.Show(stripped)
-        # modified_path = self.removeExtension(input_image_path)
-        # sitk.WriteImage(stripped, f'./data/preprocessed/scanner2_sub-CC110069_T1w_preprocessed.nii')
-        # os.remove("bixed.nii")
 
     def removeExtension(self, input_path):
         input_path.replace(".nii", "")
