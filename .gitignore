@@ -3,3 +3,10 @@ env/
 test_scans/
 .dockerignore
 Dockerfile
+__pycache__/
+data/
+singularity_containers/
+ROBEX/
+temp_test_scans/
+apply_smore_singularity.sh
+test.py 

@@ -4,31 +4,24 @@ import SimpleITK as sitk
 import numpy as np
 import nibabel as nib
 from dipy.segment.mask import median_otsu
-
+from pyrobex.robex import robex
 
 class Preprocessing:
 
-    def prepareImgs(self):
-        pass
-
-    def twoScannered(self):
-        directory = "training"
-        for filename in os.listdir(directory):
-            f = os.path.join(directory, filename)
-            bias = tio.RandomBiasField(coefficients=(0, 1), order=1)
-            blur = tio.RandomBlur(std=(0, 1))
-            ras = tio.ToCanonical()
-
-            temp_img_1 = tio.ScalarImage(f)
-            temp_img_2 = ras(temp_img_1)
-            temp_img_3 = blur(temp_img_2)
-            temp_img_4 = bias(temp_img_3)
-            new_path = f.replace("scanner1", "scanner2")
+    def __init__(self, input_folder, output_folder):
+        """
+        @input_folder: the folder that has the scans you want to preprocess
+        @output_folder: the folder that the preprocessed scans will be stored in 
+        """
+        self.input_folder = input_folder
+        self.output_folder = output_folder
+        self.files = os.listdir(input_folder)
 
     def correctBias(self, input_image_path):
         input_image = sitk.ReadImage(input_image_path, sitk.sitkFloat32)
-        maskImage = sitk.ReadImage("temp.nii", sitk.sitkUInt8)
-        os.remove("temp.nii")
+        self.createMRIMask(input_image_path)
+        maskImage = sitk.ReadImage("temp_mask.nii", sitk.sitkUInt8)
+        os.remove("temp_mask.nii")
         shrinkFactor = 3
 
         image = sitk.Shrink(
@@ -49,11 +42,22 @@ class Preprocessing:
         corrected_image_full_resolution = input_image / \
             sitk.Exp(log_bias_field)
 
-        sitk.WriteImage(corrected_image_full_resolution, "cixed.nii")
+        sitk.WriteImage(corrected_image_full_resolution, "./bixed.nii")
 
     def createMRIMask(self, input_image_path):
         img = nib.load(input_image_path)
         data = np.squeeze(img.get_fdata())
         b0_mask, mask = median_otsu(data, median_radius=2, numpass=1)
         mask_img = nib.Nifti1Image(mask.astype(np.float32), img.affine)
-        nib.save(mask_img, "temp.nii")
+        nib.save(mask_img, "temp_mask.nii")
+
+    def extractBrain(self, input_image_path):
+        image = nib.load("bixed.nii")
+        os.remove("bixed.nii")
+        stripped, mask = robex(image)
+        modified_path = self.removeExtension(input_image_path)
+        sitk.WriteImage(stripped, f'./data/preprocessed/{input_image_path}_preprocessed.nii')
+
+    def removeExtension(self, input_path):
+        input_path.replace(".nii", "")
+        return input_path
