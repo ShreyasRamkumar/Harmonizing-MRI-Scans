@@ -42,7 +42,7 @@ class Preprocessing:
         corrected_image_full_resolution = input_image / \
             sitk.Exp(log_bias_field)
 
-        sitk.WriteImage(corrected_image_full_resolution, "./bixed.nii")
+        sitk.WriteImage(corrected_image_full_resolution, "bixed.nii")
 
     def createMRIMask(self, input_image_path):
         img = nib.load(input_image_path)
@@ -52,11 +52,11 @@ class Preprocessing:
         nib.save(mask_img, "temp_mask.nii")
 
     def extractBrain(self, input_image_path):
-        image = nib.load("bixed.nii")
-        os.remove("bixed.nii")
+        image = nib.load("./bixed.nii")
         stripped, mask = robex(image)
-        modified_path = self.removeExtension(input_image_path)
-        sitk.WriteImage(stripped, f'./data/preprocessed/{input_image_path}_preprocessed.nii')
+        # modified_path = self.removeExtension(input_image_path)
+        sitk.WriteImage(stripped, f'./data/preprocessed/scanner2_sub-CC110069_T1w_preprocessed.nii')
+        os.remove("bixed.nii")
 
     def removeExtension(self, input_path):
         input_path.replace(".nii", "")
