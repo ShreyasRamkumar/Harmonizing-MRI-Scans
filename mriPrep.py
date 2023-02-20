@@ -51,12 +51,13 @@ class Preprocessing:
         mask_img = nib.Nifti1Image(mask.astype(np.float32), img.affine)
         nib.save(mask_img, "temp_mask.nii")
 
-    def extractBrain(self, input_image_path):
+    def extractBrain(self):
         image = nib.load("./bixed.nii")
         stripped, mask = robex(image)
+        sitk.Show(stripped)
         # modified_path = self.removeExtension(input_image_path)
-        sitk.WriteImage(stripped, f'./data/preprocessed/scanner2_sub-CC110069_T1w_preprocessed.nii')
-        os.remove("bixed.nii")
+        # sitk.WriteImage(stripped, f'./data/preprocessed/scanner2_sub-CC110069_T1w_preprocessed.nii')
+        # os.remove("bixed.nii")
 
     def removeExtension(self, input_path):
         input_path.replace(".nii", "")
