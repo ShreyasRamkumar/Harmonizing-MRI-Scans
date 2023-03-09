@@ -4,7 +4,7 @@ import SimpleITK as sitk
 import numpy as np
 import nibabel as nib
 from dipy.segment.mask import median_otsu
-from pyrobex.robex import robex
+from pyrobex import robex
 
 class Preprocessing:
 
@@ -16,6 +16,13 @@ class Preprocessing:
         self.input_folder = input_folder
         self.output_folder = output_folder
         self.files = os.listdir(input_folder)
+
+    def run_preprocess(self):
+        for i in self.files:
+            self.correctBias(f"./{self.input_folder}/{i}")
+            self.extractBrain(i)
+            print("successful!\n")
+        print("Preprocessing Complete!")
 
     def correctBias(self, input_image_path):
         input_image = sitk.ReadImage(input_image_path, sitk.sitkFloat32)
@@ -51,11 +58,9 @@ class Preprocessing:
         mask_img = nib.Nifti1Image(mask.astype(np.float32), img.affine)
         nib.save(mask_img, "temp_mask.nii")
 
-    def extractBrain(self):
+    def extractBrain(self, input_image_path):
         image = nib.load("./bixed.nii")
-        stripped, mask = robex(image)
-        sitk.Show(stripped)
-
-    def removeExtension(self, input_path):
-        input_path.replace(".nii", "")
-        return input_path
+        stripped = robex.robex_stripped(image)
+        output_path = input_image_path[:-4]
+        nib.save(stripped, f"./{self.output_folder}/{output_path}_preprocessed.nii")
+        os.remove("./bixed.nii")

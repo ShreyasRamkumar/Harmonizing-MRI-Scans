@@ -1,4 +1,4 @@
-from mriPrep import Preprocessing
+from Preprocessing import Preprocessing
 
 preprocessing = Preprocessing()
 
