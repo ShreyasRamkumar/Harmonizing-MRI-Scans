@@ -11,3 +11,6 @@ temp_test_scans/
 apply_smore_singularity.sh
 test.py 
 .nii
+lightning_logs/
+data/
+lightning_logs/version_0/hparams.yaml

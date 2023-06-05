@@ -1,0 +1,8 @@
+name: harmonizing-mri
+dependencies:
+- python = 3.10
+- numpy
+- pandas
+- pip
+
+
