@@ -8,6 +8,7 @@ stages:          # List of stages for jobs, and their order of execution
 build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
+    # run docker image and mount volume with local data folder
     - echo "Compiling the code..."
     - echo "Compile complete."
     - nvdia-smi
