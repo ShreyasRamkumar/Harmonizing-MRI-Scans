@@ -3,7 +3,7 @@ default:
 
 build-job: 
   tags:
-    - 3080
+    - "3080"
     - charles
     - docker
   rules:
