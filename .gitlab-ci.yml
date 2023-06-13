@@ -1,16 +1,15 @@
 default:
   image: shreyasramkumar/harmonizing-mri-scans:latest
 
-stages:          # List of stages for jobs, and their order of execution
-  - build
-
-rules:
+build-job: 
+  tags:
+    - 3080
+    - charles
+    - docker
+  rules:
     - if: $CI_COMMIT_MESSAGE =~ /\[ci]/
       when: on_success #run on success
     - when: manual 
-
-build-job:       # This job runs in the build stage, which runs first.
-  stage: build
   script:
     # run docker image and mount volume with local data folder
     - nvidia-smi
