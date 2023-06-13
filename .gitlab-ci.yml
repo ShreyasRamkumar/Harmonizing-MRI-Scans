@@ -4,6 +4,11 @@ default:
 stages:          # List of stages for jobs, and their order of execution
   - build
 
+rules:
+    - if: $CI_COMMIT_MESSAGE =~ /\[ci]/
+      when: on_success #run on success
+    - when: manual 
+
 before_script:
   - nvidia-smi
   - docker info
@@ -12,7 +17,5 @@ build-job:       # This job runs in the build stage, which runs first.
   stage: build
   script:
     # run docker image and mount volume with local data folder
-    - docker build 
-    - echo "Compiling the code..."
-    - echo "Compile complete."
+    - echo "test success!"
 
