@@ -2,6 +2,8 @@ default:
   image: shreyasramkumar/harmonizing-mri-scans:latest
 
 build-job: 
+  services:
+    - docker:dind
   tags:
     - "3080"
     - charles
