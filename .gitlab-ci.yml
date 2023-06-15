@@ -13,6 +13,7 @@ build-job:
   script:
     # run docker image and mount volume with local data folder
     - nvidia-smi
+    - docker login
     - docker info
     - echo "test success!"
 
