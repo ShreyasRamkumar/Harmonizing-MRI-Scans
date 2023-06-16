@@ -11,9 +11,6 @@ build-job:
       when: on_success #run on success
     - when: manual 
   script:
-    # run docker image and mount volume with local data folder
+    # mount volume with local data folder
     - nvidia-smi
-    - docker login
-    - docker info
-    - echo "test success!"
 
