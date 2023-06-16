@@ -1,6 +1,12 @@
 default:
   image: shreyasramkumar/harmonizing-mri-scans:latest
 
+services:
+  - docker:24.0.2-dind
+
+variables:
+  DOCKER_TLS_CERTDIR: "/certs"
+
 build-job: 
   tags:
     - "3080"
