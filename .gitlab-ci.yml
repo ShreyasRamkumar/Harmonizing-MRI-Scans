@@ -13,5 +13,6 @@ build-job:
   script:
     # mount volume with local data folder
     - nvidia-smi
-    - find docker
+    - cd /
+    - ls
 
