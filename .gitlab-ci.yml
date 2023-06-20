@@ -12,6 +12,6 @@ build-job:
     - when: manual 
   script:
     - nvidia-smi
-    - cd /
+    - cd /mri-data
     - ls
 
