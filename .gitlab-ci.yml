@@ -12,6 +12,5 @@ build-job:
     - when: manual 
   script:
     - nvidia-smi
-    - cd /var/lib
     - ls
 
