@@ -7,8 +7,8 @@ import nibabel as nib
 import numpy as np
 # change 
 # important folders
-model_input_path = "./data/processed_input"
-ground_truths_path = "./data/original/"
+model_input_path = "/mri-data/processed_input"
+ground_truths_path = "/mri-data/original/"
 
 
 class Unet_Utility:
