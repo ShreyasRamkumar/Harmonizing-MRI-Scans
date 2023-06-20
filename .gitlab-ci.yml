@@ -11,8 +11,7 @@ build-job:
       when: on_success #run on success
     - when: manual 
   script:
-    # mount volume with local data folder
     - nvidia-smi
-    - cd /usr/local
+    - cd /usr/local/lib
     - ls
 
