@@ -13,6 +13,6 @@ build-job:
   script:
     # mount volume with local data folder
     - nvidia-smi
-    - cd /etc
+    - cd /home
     - ls
 
