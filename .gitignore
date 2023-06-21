@@ -8,9 +8,11 @@ data/
 singularity_containers/
 ROBEX/
 temp_test_scans/
-apply_smore_singularity.sh
 test.py 
 .nii
 lightning_logs/
 data/
-
+initial_segmentation/
+*.sif
+*.sh
+*.ipynb
