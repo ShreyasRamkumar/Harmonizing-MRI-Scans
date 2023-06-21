@@ -17,3 +17,4 @@ initial_segmentation/
 *.sh
 *.ipynb
 weights/
+*.nii
