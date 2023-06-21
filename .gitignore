@@ -16,3 +16,4 @@ initial_segmentation/
 *.sif
 *.sh
 *.ipynb
+weights/
