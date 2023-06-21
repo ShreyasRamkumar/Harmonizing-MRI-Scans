@@ -55,5 +55,6 @@ ENV PATH /opt/conda/bin:$PATH
 COPY Preprocessing.py Preprocessing.py
 COPY network_tl.py network_tl.py 
 RUN chmod +x network_tl.py
+RUN chmod +x Preprocessing.py
 
 #RUN conda env update -qf environment.yml
