@@ -111,15 +111,13 @@ class MRITransform:
         self.output_folder_path = output_folder_path
         self.input_files = os.listdir(input_folder_path)
     
-    def mriTransform(self):
-        add_bias = tio.transforms.RandomBiasField(order=4)
-        add_blur = tio.transforms.RandomBlur(std=(1, 3))
-        add_noise = tio.transforms.Noise(mean=0.5, std=0.3, seed=0)
+    def create_training_data(self):
+        transforms = tio.transforms.Compose([tio.transforms.RandomBiasField(coefficients=1, order=3), 
+                                             tio.transforms.RandomMotion(degrees=4, translation=4, num_transforms=2), 
+                                             tio.transforms.RandomNoise(mean=2, std=1)])
         for i in tqdm(self.input_files):
             image = tio.ScalarImage(f"{self.input_folder_path}/{i}")
-            biased_image = add_bias(image)
-            noised_image = add_noise(biased_image)
-            blurred_image = add_blur(noised_image)
-            blurred_image.save(f"{self.output_folder_path}/{i}")
+            augmented_image = transforms(image)
+            augmented_image.save(f"{self.output_folder_path}/{i}")
 
 
