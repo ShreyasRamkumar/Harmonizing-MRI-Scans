@@ -5,6 +5,8 @@ from torch.utils.data import DataLoader, Dataset
 import pytorch_lightning as pl
 import nibabel as nib
 import numpy as np
+from tqdm import tqdm
+import skimage
 # change 
 # important folders
 model_input_path = "/mri-data/processed_input"
@@ -56,7 +58,18 @@ class Unet_Utility:
         delta = delta // 2
 
         return tensor[:, :, delta:tensor_size- delta, delta:tensor_size-delta]
-    
+
+    @staticmethod
+    def get_slice(scan_tensor):
+        scan_entropies = []
+        for i in tqdm(range(256)):
+            scan_slice = scan_tensor[:, :, i]
+            entropy = skimage.measure.shannon_entropy(scan_slice)
+            scan_entropies.append(entropy)
+        max_entropy = max(scan_entropies)
+        max_entropy_slice_index = scan_entropies.index(max_entropy)
+        return max_entropy_slice_index
+                    
 
 
 # Model Class
@@ -165,7 +178,7 @@ class MRIDataModule(pl.LightningDataModule):
         self.training_dataloader = self.train_dataloader()
 
         self.testing = self.input_files[179:233]
-        self.ground_truth_testing = self.ground_truth_files[179:233]
+        self.ground_truth_testing = self.ground_truth_files[179:233]  
 
         self.testing_dataset = MRIDataset(self.testing, self.ground_truth_testing)
         self.testing_dataloader = self.test_dataloader()
@@ -203,14 +216,15 @@ class MRIDataset(Dataset):
         scan = nib.load(f"{model_input_path}/{scan_path}")
         scan_array = scan.get_fdata()
         scan_tensor = torch.tensor(scan_array, dtype=torch.float32)
-        scan_slice = scan_tensor[:, :, 100]
+        slice_index = Unet_Utility.get_slice(scan_tensor=scan_tensor)
+        scan_slice = scan_tensor[:, :, slice_index]
         scan_slice = scan_slice[None, :, :]
 
         ground_truth_scan_path = self.ground_truth[index]
         ground_truth_scan = nib.load(f"{ground_truths_path}/{ground_truth_scan_path}")
         ground_truth_scan_array = ground_truth_scan.get_fdata()
         ground_truth_scan_tensor = torch.tensor(ground_truth_scan_array, dtype=torch.float32)
-        ground_truth_scan_slice = ground_truth_scan_tensor[:, :, 100]
+        ground_truth_scan_slice = ground_truth_scan_tensor[:, :, slice_index]
         ground_truth_scan_slice = ground_truth_scan_slice[None, :, :]
 
         return {"scan": scan_slice, "ground_truth": ground_truth_scan_slice}

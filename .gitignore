@@ -18,3 +18,4 @@ initial_segmentation/
 *.ipynb
 weights/
 *.nii
+*.zip
