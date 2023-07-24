@@ -69,7 +69,6 @@ class Unet_Utility:
         max_entropy = max(scan_entropies)
         max_entropy_slice_index = scan_entropies.index(max_entropy)
         return max_entropy_slice_index
-                    
 
 
 # Model Class
@@ -213,7 +212,8 @@ class MRIDataset(Dataset):
 
     def __getitem__(self, index):
         scan_path = self.model_input[index]
-        scan = nib.load(f"{model_input_path}/{scan_path}")
+        intermediate_scan_list = os.listdir(f"{model_input_path}/{scan_path}/anat/")
+        scan = nib.load(f"{model_input_path}/{scan_path}/anat/{intermediate_scan_list[0]}")
         scan_array = scan.get_fdata()
         scan_tensor = torch.tensor(scan_array, dtype=torch.float32)
         slice_index = Unet_Utility.get_slice(scan_tensor=scan_tensor)
@@ -221,7 +221,8 @@ class MRIDataset(Dataset):
         scan_slice = scan_slice[None, :, :]
 
         ground_truth_scan_path = self.ground_truth[index]
-        ground_truth_scan = nib.load(f"{ground_truths_path}/{ground_truth_scan_path}")
+        intermediate_scan_list = os.listdir(f"{model_input_path}/{ground_truth_scan_path}/anat/")
+        ground_truth_scan = nib.load(f"{model_input_path}/{ground_truth_scan_path}/anat/{intermediate_scan_list[0]}")
         ground_truth_scan_array = ground_truth_scan.get_fdata()
         ground_truth_scan_tensor = torch.tensor(ground_truth_scan_array, dtype=torch.float32)
         ground_truth_scan_slice = ground_truth_scan_tensor[:, :, slice_index]
