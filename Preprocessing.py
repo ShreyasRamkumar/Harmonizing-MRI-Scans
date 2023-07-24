@@ -17,7 +17,7 @@ class Preprocessing:
         """
         self.input_folder = input_folder
         self.output_folder = output_folder
-        self.files = os.listdir(self.input_folder)
+        
 
     def run_preprocess(self):
         for i in tqdm(self.files):
@@ -88,9 +88,9 @@ class Preprocessing:
     
     def baselineImprov(self):
         denoise = sitk.MinMaxCurvatureFlowImageFilter()
-        for i in tqdm(self.files):
+        for i in tqdm(os.listdir(self.input_folder)):
             image_path = os.listdir(f"{self.input_folder}/{i}/anat")
-            image = sitk.ReadImage(image_path, sitk.sitkFloat32)
+            image = sitk.ReadImage(f"{self.input_folder}/{i}/anat/{image_path}", sitk.sitkFloat32)
             image_mask = self.createMRIMask(image_path, image_created=True)
             bias_corrected_image = self.correctBias(input_image_path=None, image_created=True, image=image, image_mask=image_mask)
             denoised_image = denoise.Execute(bias_corrected_image)
