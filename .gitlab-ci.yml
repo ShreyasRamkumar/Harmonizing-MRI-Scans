@@ -13,4 +13,7 @@ build-job:
   script:
     - nvidia-smi
     - python network_tl.py
+  artiacts:
+    paths:
+      - tests/logs
 
