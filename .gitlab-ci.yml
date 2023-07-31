@@ -11,6 +11,10 @@ build-job:
       when: on_success #run on success
     - when: manual 
   script:
-    - nvidia-smi
-    - python network_tl.py
+    - ls
+    # - nvidia-smi
+    # - python network_tl.py
+  # artifacts:
+    # paths:
+      # - 
 
