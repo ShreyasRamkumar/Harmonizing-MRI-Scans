@@ -78,7 +78,7 @@ class Unet_Utility:
 
 class SaveOutput(Callback):
     def on_test_end(self, trainer, pl_module):
-        outputs = pl_module.validation_outputs
+        outputs = pl_module.testing_outputs
         y_hat_directory = "./data/postprocessed"
         
         for i in range(len(outputs)):
@@ -96,7 +96,7 @@ class Unet(pl.LightningModule):
         # hyperparameters
         self.learning_rate = learning_rate
         self.criterion = nn.MSELoss()
-        self.validation_outputs = []
+        self.testing_outputs = []
         
         # definition of neural network 
 
@@ -170,7 +170,7 @@ class Unet(pl.LightningModule):
         y = test_batch["ground_truth"]
         y_hat = self.forward(x)
 
-        self.validation_outputs.append(y_hat)
+        self.testing_outputs.append(y_hat)
 
         loss = self.criterion(y_hat, y)
         self.log("test_loss", loss, on_epoch=True)
@@ -273,5 +273,5 @@ if __name__ == "__main__":
     model = Unet()
     train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1)
     train.fit(model, mri_data)
-    train.validate(model, mri_data)
+    train.test(model, mri_data)
         
