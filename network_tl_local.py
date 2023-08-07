@@ -164,6 +164,16 @@ class Unet(pl.LightningModule):
         loss = self.criterion(y_hat, y)
         self.log("train_loss", loss, on_epoch=True)
         return loss
+    
+    def testing_step(self, test_batch, batch_idx):
+        x = test_batch["scan"]
+        y = test_batch["ground_truth"]
+        y_hat = self.forward(x)
+
+        self.validation_outputs.append(y_hat)
+
+        loss = self.criterion(y_hat, y)
+        self.log("test_loss", loss, on_epoch=True)
 
     def validation_step(self, val_batch, batch_idx):
         x = val_batch["scan"]
