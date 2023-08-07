@@ -77,7 +77,7 @@ class Unet_Utility:
         return [training_len, validation_len, validation_len]
 
 class SaveOutput(Callback):
-    def on_validation_end(self, trainer, pl_module):
+    def on_test_end(self, trainer, pl_module):
         outputs = pl_module.validation_outputs
         y_hat_directory = "./data/postprocessed"
         
