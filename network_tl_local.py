@@ -170,7 +170,7 @@ class Unet(pl.LightningModule):
         x = test_batch["scan"]
         y = test_batch["ground_truth"]
         y_hat = self.forward(x)
-
+        print(y_hat.shape)
         self.testing_outputs.append(y_hat)
 
         loss = self.criterion(y_hat, y)
@@ -274,6 +274,6 @@ if __name__ == "__main__":
     model = Unet()
     saveoutput = SaveOutput()
     train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[saveoutput])
-    train.fit(model, mri_data)
+    # train.fit(model, mri_data)
     train.test(model, mri_data)
         
