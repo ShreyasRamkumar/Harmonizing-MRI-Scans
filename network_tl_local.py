@@ -82,9 +82,9 @@ class SaveOutput(Callback):
         y_hat_directory = "./data/postprocessed"
         
         for i in range(len(outputs)):
-            index = self.validation_outputs.index(i)
-            y_hat_path = f"{y_hat_directory}/{index}.nii"
-            y_hat_array = i.numpy()
+            y_hat_path = f"{y_hat_directory}/{i}.nii"
+            cpu_tensor = outputs[i].cpu()
+            y_hat_array = cpu_tensor.numpy()
             y_hat_scan = nib.Nifti1Image(y_hat_array, affine=np.eye(4))
             nib.save(y_hat_scan, y_hat_path)
         
@@ -165,7 +165,7 @@ class Unet(pl.LightningModule):
         self.log("train_loss", loss, on_epoch=True)
         return loss
     
-    def testing_step(self, test_batch, batch_idx):
+    def test_step(self, test_batch, batch_idx):
         x = test_batch["scan"]
         y = test_batch["ground_truth"]
         y_hat = self.forward(x)
@@ -271,7 +271,8 @@ class MRIDataset(Dataset):
 if __name__ == "__main__":
     mri_data = MRIDataModule(batch_size=4)
     model = Unet()
-    train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1)
-    # train.fit(model, mri_data)
+    saveoutput = SaveOutput()
+    train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[saveoutput])
+    train.fit(model, mri_data)
     train.test(model, mri_data)
         
