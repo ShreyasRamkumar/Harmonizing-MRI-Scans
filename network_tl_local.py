@@ -97,6 +97,7 @@ class Unet(pl.LightningModule):
         self.learning_rate = learning_rate
         self.criterion = nn.MSELoss()
         self.testing_outputs = []
+        self.validation_outputs = []
         
         # definition of neural network 
 
