@@ -79,13 +79,20 @@ class Unet_Utility:
 class SaveOutput(Callback):
     def on_test_end(self, trainer, pl_module):
         outputs = pl_module.testing_outputs
+        sliced_y_hat_list = []
         y_hat_directory = "./data/postprocessed"
         
         for i in range(len(outputs)):
+            y_hat = outputs[i]
+            for i in range(4):
+                sliced_y_hat = y_hat[i:i+1, :, :, :]
+                sliced_y_hat_list.append(sliced_y_hat)
+
+        for i in range(len(sliced_y_hat_list)):
             y_hat_path = f"{y_hat_directory}/{i}.nii"
-            cpu_tensor = outputs[i].cpu()
-            y_hat_array = cpu_tensor.numpy()
-            y_hat_scan = nib.Nifti1Image(y_hat_array, affine=np.eye(4))
+            sliced_y_hat_tensor = sliced_y_hat_list[i].cpu()
+            sliced_y_hat_array = sliced_y_hat_tensor.numpy()
+            y_hat_scan = nib.Nifti1Image(sliced_y_hat_array, affine=np.eye(4))
             nib.save(y_hat_scan, y_hat_path)
         
 
@@ -170,7 +177,6 @@ class Unet(pl.LightningModule):
         x = test_batch["scan"]
         y = test_batch["ground_truth"]
         y_hat = self.forward(x)
-        print(y_hat.shape)
         self.testing_outputs.append(y_hat)
 
         loss = self.criterion(y_hat, y)
