@@ -272,6 +272,6 @@ if __name__ == "__main__":
     mri_data = MRIDataModule(batch_size=4)
     model = Unet()
     train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1)
-    train.fit(model, mri_data)
+    # train.fit(model, mri_data)
     train.test(model, mri_data)
         
