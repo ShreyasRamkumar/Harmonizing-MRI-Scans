@@ -84,8 +84,11 @@ class SaveOutput(Callback):
         
         for i in range(len(outputs)):
             y_hat = outputs[i]
-            for i in range(4):
-                sliced_y_hat = y_hat[i:i+1, :, :, :]
+            for j in range(4):
+                sliced_y_hat = y_hat[j:j+1, :, :, :]
+                print(sliced_y_hat.shape)
+                sliced_y_hat = sliced_y_hat.reshape(1, 256, 192, 1)
+                print(sliced_y_hat.shape)
                 sliced_y_hat_list.append(sliced_y_hat)
 
         for i in range(len(sliced_y_hat_list)):
@@ -282,4 +285,3 @@ if __name__ == "__main__":
     train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[saveoutput])
     # train.fit(model, mri_data)
     train.test(model, mri_data)
-        
