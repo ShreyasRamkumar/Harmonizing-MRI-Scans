@@ -87,7 +87,11 @@ class SaveOutput(Callback):
             for j in range(4):
                 sliced_y_hat = y_hat[j:j+1, :, :, :]
                 print(sliced_y_hat.shape)
-                sliced_y_hat = sliced_y_hat.reshape(1, 256, 192, 1)
+                if sliced_y_hat.shape == torch.Size([0, 1, 192, 256]):
+                    sliced_y_hat = sliced_y_hat.reshape(0, 192, 256, 1)
+                else:
+                    sliced_y_hat = sliced_y_hat.reshape(1, 192, 256, 1)
+                sliced_y_hat = sliced_y_hat.squeeze(dim=0)
                 print(sliced_y_hat.shape)
                 sliced_y_hat_list.append(sliced_y_hat)
 
@@ -283,5 +287,5 @@ if __name__ == "__main__":
     model = Unet()
     saveoutput = SaveOutput()
     train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[saveoutput])
-    # train.fit(model, mri_data)
+    train.fit(model, mri_data)
     train.test(model, mri_data)
