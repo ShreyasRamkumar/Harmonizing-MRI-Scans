@@ -7,6 +7,7 @@ from dipy.segment.mask import median_otsu
 from pyrobex import robex
 from tqdm import tqdm
 import torch
+import nipype
 
 class Preprocessing:
 
