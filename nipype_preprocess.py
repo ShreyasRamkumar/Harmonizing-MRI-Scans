@@ -1,8 +1,6 @@
 from nipype import Node, Workflow, Function
 from nipype.interfaces.spm import Realign
 from nipype.interfaces.ants import N4BiasFieldCorrection
-from os.path import abspath
-import torch
 import nibabel as nib 
 import numpy as np
 
