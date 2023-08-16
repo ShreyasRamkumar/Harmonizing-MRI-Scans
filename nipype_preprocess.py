@@ -3,6 +3,8 @@ from nipype.interfaces.spm import Realign
 from nipype.interfaces.ants import N4BiasFieldCorrection
 from os.path import abspath
 import torch
+import nibabel as nib 
+import numpy as np
 
 def minMaxNormalization(image):
     tensor_min = torch.min(image)
@@ -10,10 +12,16 @@ def minMaxNormalization(image):
     normalized_image = (image - tensor_min) / (tensor_max - tensor_min)
     return normalized_image
 
-in_file = abspath("raw.nii")
+def wf(input_image):
+    img = nib.load(input_image)
+    img_array = img.get_fdata()
+    img_tensor = torch.tensor(img_array, dtype=torch.float32)
+    normalize = Node(Function(input_names=["image"], output_names=["normalized_image"], function=minMaxNormalization), name="min_max_norm")
+    normalize.inputs.image=img_tensor
+    normalize.run()
+    normalized_image_array = normalize.outputs.normalized_image.numpy()
+    normalized_image = nib.Nifti1Image(normalized_image_array, affine=np.eye(4))
+    nib.save(normalized_image, "./preprocessed1.nii")
 
-bias = Node(N4BiasFieldCorrection(in_file=in_file, dimension=3, bspline_fitting_distance=300, shrink_factor=3))
-motion = Node(Realign(in_file=bias.outputs.out_file, register_to_mean=True))
 
-wf = Workflow(name="preprocessing")
-wf.connect([bias, motion, [("out_file", "in_file")]])
+wf("raw.nii")
