@@ -287,5 +287,5 @@ if __name__ == "__main__":
     model = Unet()
     saveoutput = SaveOutput()
     train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[saveoutput])
-    # train.fit(model, mri_data)
+    train.fit(model, mri_data)
     train.test(model, mri_data)
