@@ -1,0 +1,14 @@
+name: Check NVIDIA GPU
+
+on:
+  push:
+    branches:
+      - main  # Adjust the branch as needed
+
+jobs:
+  nvidia-check:
+    runs-on: self-hosted  # This job will run on a self-hosted runner
+
+    steps:
+    - name: Check NVIDIA GPU
+      run: nvidia-smi
