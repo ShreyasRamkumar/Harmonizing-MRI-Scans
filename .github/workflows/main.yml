@@ -1,4 +1,4 @@
-name: Check NVIDIA GPU
+name: Harmonizing MRI Scans
 
 on:
   push:
