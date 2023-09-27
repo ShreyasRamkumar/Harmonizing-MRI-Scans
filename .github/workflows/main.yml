@@ -3,7 +3,7 @@ name: Harmonizing MRI Scans
 on:
   push:
     branches:
-      - main  # Adjust the branch as needed
+      - main  
 
 jobs:
   nvidia-check:
