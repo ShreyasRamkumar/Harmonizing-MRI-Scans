@@ -8,7 +8,7 @@ on:
 jobs:
   nvidia-check:
     runs-on: self-hosted  # This job will run on a self-hosted runner
-    container: 
+    container:
       image: shreyasramkumar/harmonizing-mri-scans:latest
       volumes:
         - /home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data:/mri-data:rw
