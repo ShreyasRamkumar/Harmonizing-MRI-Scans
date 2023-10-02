@@ -21,4 +21,4 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: View Mounted Volumes
-      run: cat /proc/mounts
+      run: mount | grep ^/dev
