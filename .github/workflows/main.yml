@@ -20,8 +20,5 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Navigate to Home
-      run: cd /
-
-    - name: List Directories
-      run: ls
+    - name: View Mounted Volumes
+      run: cat /proc/mounts
