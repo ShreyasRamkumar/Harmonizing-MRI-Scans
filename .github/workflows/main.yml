@@ -20,5 +20,8 @@ jobs:
     - name: Set up Docker Buildx
       uses: docker/setup-buildx-action@v3
 
-    - name: Check Directory Listing
+    - name: Navigate to Home
+      run: cd 
+
+    - name: List Directories
       run: ls
