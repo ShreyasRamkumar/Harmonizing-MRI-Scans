@@ -21,4 +21,4 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: View Mounted Volumes
-      run: mount | grep ^/dev
+      run: cd /mri-data
