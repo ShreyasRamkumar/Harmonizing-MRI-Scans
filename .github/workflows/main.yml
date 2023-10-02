@@ -18,10 +18,7 @@ jobs:
       uses: actions/checkout@v4
         
     - name: Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
-    
-    - name: Check NVIDIA GPU
-      run: nvidia-smi
+      uses: docker/setup-buildx-action@v3e
 
     - name: Check Directory Listing
       run: ls
