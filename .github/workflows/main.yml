@@ -21,7 +21,7 @@ jobs:
       uses: docker/setup-buildx-action@v3
 
     - name: Change to Mounted Volumes
-      run: cd /mri-data
+      run: cd /
 
     - name: View Data
       run: ls
