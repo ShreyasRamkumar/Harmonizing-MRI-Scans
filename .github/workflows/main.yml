@@ -1,14 +1,28 @@
-name: Check NVIDIA GPU
+name: Harmonizing MRI Scans
 
 on:
   push:
     branches:
-      - main  # Adjust the branch as needed
+      - main  
 
 jobs:
   nvidia-check:
     runs-on: self-hosted  # This job will run on a self-hosted runner
-
+    container:
+      image: shreyasramkumar/harmonizing-mri-scans:latest
+      volumes:
+        - /home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data:/mri-data:rw
+    
     steps:
-    - name: Check NVIDIA GPU
-      run: nvidia-smi
+    - name: Checkout
+      uses: actions/checkout@v4
+        
+    - name: Set up Docker Buildx
+      uses: docker/setup-buildx-action@v3
+
+    - name: Change to Mounted Volumes
+      run: cd /
+
+    - name: View Data
+      run: ls
+    
