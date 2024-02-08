@@ -9,7 +9,6 @@ singularity_containers/
 ROBEX/
 temp_test_scans/
 test.py 
-.nii
 lightning_logs/
 data/
 initial_segmentation/
@@ -20,3 +19,6 @@ weights/
 *.nii
 *.zip
 *.json
+*.nii.gz
+*.txt
+*.png
