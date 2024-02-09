@@ -142,14 +142,29 @@ class DatasetPreparation(Preprocessing):
     Prepares training and testing datasets using methods from Preprocessing class
 
     Attributes:
-        input_folder (str): The folder containing the scans to preprocess.
-        output_folder (str): The folder where preprocessed scans will be stored.
+        input_folder_path (str): The folder containing the scans to preprocess.
+        training_folder_path (str, optional): The folder that will store training scans. Defaults to None.
+        ideal_folder_path (str, optional): The folder that will store ideal or ground truth scans. Defaults to None.
     """
-    def __init__(self, input_folder_path, training_folder_path, ideal_folder_path) -> None:
-        super().__init__(input_folder_path, output_folder_path)
-        self.input_files = os.listdir(input_folder_path)
+    def __init__(self, input_folder_path, training_folder_path=None, ideal_folder_path=None) -> None:
+        """
+        Initializes DatasetPreparation object.
+
+        Args:
+            input_folder_path (str): The path to the input dataset folder.
+            training_folder_path (str, optional): The path to the folder that stores the training scans. Defaults to None.
+            ideal_folder_path (str, optional): The path to the folder that will store the ideal scans. Defaults to None.
+        """
+        self.input_folder_path = input_folder_path
+        if training_folder_path != None:
+            self.training_folder_path = training_folder_path
+        if ideal_folder_path != None:
+            super().__init__(self.input_folder_path, ideal_folder_path)
     
     def create_training_data(self):
+        """
+        Creates training data by applying random bias field, random motion, and random noise to input scans.
+        """
         transforms = tio.transforms.Compose([tio.transforms.RandomBiasField(coefficients=1, order=3), 
                                              tio.transforms.RandomMotion(degrees=4, translation=4, num_transforms=2), 
                                              tio.transforms.RandomNoise(mean=2, std=1)])
@@ -159,10 +174,13 @@ class DatasetPreparation(Preprocessing):
             augmented_image.save(f"{self.output_folder_path}/{i}")
     
     def baselineImprov(self):
+        """
+        Creates ideal data by correcting bias fields, conducting min-max normalization, and removing noise. 
+        """
         denoise = sitk.MinMaxCurvatureFlowImageFilter()
         for i in tqdm(self.input_files):
-            image_path = os.listdir(f"{self.input_folder}/{i}/anat")
-            image = sitk.ReadImage(f"{self.input_folder}/{i}/anat/{image_path}", sitk.sitkFloat32)
+            image_path = os.listdir(f"{super().input_folder}/{i}/anat")
+            image = sitk.ReadImage(f"{super().input_folder}/{i}/anat/{image_path}", sitk.sitkFloat32)
             image_mask = super().createMRIMask(image_path, image_created=True)
             bias_corrected_image = super().correctBias(input_image_path=None, image_created=True, image=image, image_mask=image_mask)
             denoised_image = denoise.Execute(bias_corrected_image)
@@ -173,7 +191,7 @@ class DatasetPreparation(Preprocessing):
             print("Image normalized!")
             norm_img_array = np.array(normalized_image)
             norm_img_nifti = nib.Nifti1Image(norm_img_array, affine=np.eye(4))
-            nib.save(norm_img_nifti, f"{self.output_folder}/{i}")
+            nib.save(norm_img_nifti, f"{super().output_folder}/{i}")
             print("Enhancement Successful!")
 
 
