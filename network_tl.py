@@ -5,77 +5,14 @@ import torch
 from torch.utils.data import DataLoader, Dataset
 import nibabel as nib
 import numpy as np
-from tqdm import tqdm
-import skimage
 from lightning.pytorch.callbacks import Callback
+from Network_Utility import Network_Utility
+from Image import Image
  
 # important folders
 model_input_path = "/mri-data/processed_input"
 ground_truths_path = "/mri-data/original/"
 y_hat_directory = "/mri-data/postprocessed"
-
-
-class Unet_Utility:
-
-    @staticmethod
-    def convolution(in_c, out_c):
-        run = nn.Sequential(
-            nn.Conv2d(in_channels=in_c, out_channels=out_c, kernel_size=3, padding=1),
-            nn.ReLU(),
-            nn.BatchNorm2d(num_features=out_c)
-        )
-        return run
-    
-    @staticmethod
-    def down_convolution(in_c, out_c):
-        run = nn.Sequential(
-            nn.Conv2d(in_channels=in_c, out_channels=out_c, kernel_size=4, stride=2, padding=1),
-            nn.ReLU(),
-            nn.BatchNorm2d(num_features=out_c)
-        )
-        return run
-
-    @staticmethod
-    def up_convolution(in_c, out_c):
-        run = nn.Sequential(
-            nn.ConvTranspose2d(in_channels=in_c, out_channels=out_c, kernel_size=4, stride=2, padding=1),
-            nn.ReLU(),
-            nn.BatchNorm2d(num_features=out_c),
-        )
-        return run
-
-    @staticmethod
-    def final_convolution(in_c, out_c):
-        run = nn.Sequential(
-            nn.Conv2d(in_channels=in_c, out_channels=out_c, kernel_size=1),
-            nn.ReLU()
-        )
-        return run
-
-    @staticmethod
-    def crop_tensor(target_tensor, tensor):
-        target_size = target_tensor.size()[2]
-        tensor_size = tensor.size()[2]
-        delta = tensor_size - target_size
-        delta = delta // 2
-
-        return tensor[:, :, delta:tensor_size- delta, delta:tensor_size-delta]
-
-    @staticmethod
-    def get_slice(scan_tensor):
-        scan_entropies = []
-        for i in tqdm(range(192)):
-            scan_slice = scan_tensor[:, :, i]
-            entropy = skimage.measure.shannon_entropy(scan_slice)
-            scan_entropies.append(entropy)
-        max_entropy = max(scan_entropies)
-        max_entropy_slice_index = scan_entropies.index(max_entropy)
-        return max_entropy_slice_index
-    
-    def create_data_splits(dataset_len):
-        training_len = int(dataset_len * 0.8)
-        validation_len = int((dataset_len - training_len) / 2)
-        return [training_len, validation_len, validation_len]
 
 class SaveOutput(Callback):
     def on_test_end(self, trainer, pl_module):
@@ -116,24 +53,24 @@ class Unet(pl.LightningModule):
         # definition of neural network 
 
         # naming convention = o_number of channels_encode/decode_up/down?side
-        self.o_16_encode_side = Unet_Utility.convolution(1, 16)
-        self.o_16_encode_down = Unet_Utility.down_convolution(16, 16)
-        self.o_32_encode_side = Unet_Utility.convolution(16, 32)
-        self.o_32_encode_down = Unet_Utility.down_convolution(32, 32)
-        self.o_64_encode_side = Unet_Utility.convolution(32, 64)
-        self.o_64_encode_down = Unet_Utility.down_convolution(64, 64)
-        self.o_128_encode_side = Unet_Utility.convolution(64, 128)
-        self.o_128_encode_down = Unet_Utility.down_convolution(128, 128)
-        self.o_256_encode_side = Unet_Utility.convolution(128, 256)
-        self.o_128_decode_up = Unet_Utility.up_convolution(256, 128)
-        self.o_128_decode_side = Unet_Utility.convolution(256, 128)
-        self.o_64_decode_up = Unet_Utility.up_convolution(128, 64)
-        self.o_64_decode_side = Unet_Utility.convolution(128, 64)
-        self.o_32_decode_up = Unet_Utility.up_convolution(64, 32)
-        self.o_32_decode_side = Unet_Utility.convolution(64, 32)
-        self.o_16_decode_up = Unet_Utility.up_convolution(32, 16)
-        self.o_16_decode_side = Unet_Utility.convolution(32, 16)
-        self.o_1_decode_side = Unet_Utility.final_convolution(17, 1)
+        self.o_16_encode_side = Network_Utility.convolution(1, 16)
+        self.o_16_encode_down = Network_Utility.down_convolution(16, 16)
+        self.o_32_encode_side = Network_Utility.convolution(16, 32)
+        self.o_32_encode_down = Network_Utility.down_convolution(32, 32)
+        self.o_64_encode_side = Network_Utility.convolution(32, 64)
+        self.o_64_encode_down = Network_Utility.down_convolution(64, 64)
+        self.o_128_encode_side = Network_Utility.convolution(64, 128)
+        self.o_128_encode_down = Network_Utility.down_convolution(128, 128)
+        self.o_256_encode_side = Network_Utility.convolution(128, 256)
+        self.o_128_decode_up = Network_Utility.up_convolution(256, 128)
+        self.o_128_decode_side = Network_Utility.convolution(256, 128)
+        self.o_64_decode_up = Network_Utility.up_convolution(128, 64)
+        self.o_64_decode_side = Network_Utility.convolution(128, 64)
+        self.o_32_decode_up = Network_Utility.up_convolution(64, 32)
+        self.o_32_decode_side = Network_Utility.convolution(64, 32)
+        self.o_16_decode_up = Network_Utility.up_convolution(32, 16)
+        self.o_16_decode_side = Network_Utility.convolution(32, 16)
+        self.o_1_decode_side = Network_Utility.final_convolution(17, 1)
     
     # forward pass
     def forward(self, image):
@@ -216,7 +153,7 @@ class MRIDataModule(pl.LightningDataModule):
     def setup(self, stage: str):
         # set up training, testing, validation split
         
-        lens = Unet_Utility.create_data_splits(len(self.input_files))
+        lens = Network_Utility.create_data_splits(len(self.input_files))
         training_stop_index = lens[0]
         testing_stop_index = lens[0] + lens[1]
         validation_stop_index = lens[0] + lens[1] + lens[2] - 1
@@ -267,7 +204,7 @@ class MRIDataset(Dataset):
         scan = nib.load(f"{model_input_path}/{scan_path}/anat/{intermediate_scan_list[0]}")
         scan_array = scan.get_fdata()
         scan_tensor = torch.tensor(scan_array, dtype=torch.float32)
-        slice_index = Unet_Utility.get_slice(scan_tensor=scan_tensor)
+        slice_index = Network_Utility.get_slice(scan_tensor=scan_tensor)
         scan_slice = scan_tensor[:, :, slice_index]
         scan_slice = scan_slice[None, :, :]
 
