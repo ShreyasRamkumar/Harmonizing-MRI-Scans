@@ -10,9 +10,9 @@ from Network_Utility import Network_Utility
 from Image import Image
  
 # important folders
-model_input_path = "/mri-data/processed_input"
-ground_truths_path = "/mri-data/original/"
-y_hat_directory = "/mri-data/postprocessed"
+x_directory = "/mri-data/processed_input"
+y_directory = "/mri-data/original"
+yhat_directory = "/mri-data/postprocessed"
 
 class SaveOutput(Callback):
     def on_test_end(self, trainer, pl_module):
@@ -20,24 +20,24 @@ class SaveOutput(Callback):
         sliced_y_hat_list = []
         
         for i in range(len(outputs)):
-            y_hat = outputs[i]
+            yhat = outputs[i]
             for j in range(4):
-                sliced_y_hat = y_hat[j:j+1, :, :, :]
-                print(sliced_y_hat.shape)
-                if sliced_y_hat.shape == torch.Size([0, 1, 256, 256]):
-                    sliced_y_hat = sliced_y_hat.reshape(0, 256, 1, 256)
+                sliced_yhat = yhat[j:j+1, :, :, :]
+                print(sliced_yhat.shape)
+                if sliced_yhat.shape == torch.Size([0, 1, 256, 256]):
+                    sliced_yhat = sliced_yhat.reshape(0, 256, 1, 256)
                 else:
-                    sliced_y_hat = sliced_y_hat.reshape(1, 256, 1, 256)
-                sliced_y_hat = sliced_y_hat.squeeze(dim=0)
-                print(sliced_y_hat.shape)
-                sliced_y_hat_list.append(sliced_y_hat)
+                    sliced_yhat = sliced_yhat.reshape(1, 256, 1, 256)
+                sliced_yhat = sliced_yhat.squeeze(dim=0)
+                print(sliced_yhat.shape)
+                sliced_y_hat_list.append(sliced_yhat)
 
         for i in range(len(sliced_y_hat_list)):
-            y_hat_path = f"{y_hat_directory}/{i}.nii"
-            sliced_y_hat_tensor = sliced_y_hat_list[i].cpu()
-            sliced_y_hat_array = sliced_y_hat_tensor.numpy()
-            y_hat_scan = nib.Nifti1Image(sliced_y_hat_array, affine=np.eye(4))
-            nib.save(y_hat_scan, y_hat_path)
+            yhat_path = f"{yhat_directory}/{i}.nii"
+            sliced_yhat_tensor = sliced_y_hat_list[i].cpu()
+            sliced_yhat_array = sliced_yhat_tensor.numpy()
+            y_hat_scan = nib.Nifti1Image(sliced_yhat_array, affine=np.eye(4))
+            nib.save(y_hat_scan, yhat_path)
         
 
 # Model Class
@@ -50,9 +50,7 @@ class Unet(pl.LightningModule):
         self.testing_outputs = []
         self.validation_outputs = []
         
-        # definition of neural network 
-
-        # naming convention = o_number of channels_encode/decode_up/down?side
+        # definition of neural network (naming convention = o_number of channels_encode/decode_up/down/side)
         self.o_16_encode_side = Network_Utility.convolution(1, 16)
         self.o_16_encode_down = Network_Utility.down_convolution(16, 16)
         self.o_32_encode_side = Network_Utility.convolution(16, 32)
@@ -142,25 +140,19 @@ class MRIDataModule(pl.LightningDataModule):
         super().__init__()
         self.batch_size = batch_size
         self.training = []
-        self.ground_truth_training = []
         self.testing = []
-        self.ground_truth_testing = []
         self.validation = []
-        self.ground_truth_validation = []
-        self.input_files = os.listdir(model_input_path)
-        self.ground_truth_files = os.listdir(ground_truths_path)
+        self.images = [Image(x_image=x_directory+i, y_image=y_directory+i) for i in os.listdir(x_directory)]
 
     def setup(self, stage: str):
         # set up training, testing, validation split
         
-        lens = Network_Utility.create_data_splits(len(self.input_files))
+        lens = Network_Utility.create_data_splits(len(self.images))
         training_stop_index = lens[0]
         testing_stop_index = lens[0] + lens[1]
         validation_stop_index = lens[0] + lens[1] + lens[2] - 1
 
-        self.training = self.input_files[:training_stop_index]
-        self.ground_truth_training = self.ground_truth_files[:training_stop_index]
-
+        self.training = self.images[:training_stop_index]
         self.training_dataset = MRIDataset(self.training, self.ground_truth_training)
         self.training_dataloader = self.train_dataloader()
 
@@ -186,14 +178,11 @@ class MRIDataModule(pl.LightningDataModule):
     def val_dataloader(self):
         return DataLoader(self.validation_dataset, batch_size = self.batch_size)
 
-    
-
 
 class MRIDataset(Dataset):
-    def __init__(self, model_input: list = [], ground_truth: list = []):
+    def __init__(self, images: list=[]):
         super().__init__()
-        self.model_input = model_input
-        self.ground_truth = ground_truth
+        self.images = images
 
     def __len__(self):
         return len(self.model_input)

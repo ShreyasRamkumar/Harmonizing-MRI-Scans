@@ -6,18 +6,17 @@ from tqdm import tqdm
 from skimage.measure import shannon_entropy
 
 class Image:
-    def __init__(self, image, id):
+    def __init__(self, x_image, y_image, id):
         self.id = id
-        self.nifti = nib.load(image)
-        self.array = self.nifti.get_fdata()
+        xhat_image = None
+        self.nifti = [nib.load(x_image), xhat_image, nib.load(y_image)] # input, predicted, ground truth
         
         self.slice_index = 0
-        self.slice = None
+        self.slices = [] # input, predicted, ground truth
         self.get_slice()
+        self.slices.extend([None, self.nifti[2].get_fdata()[:, :, self.slice_index]])
 
-        self.n_1 = None
-        self.n_2 = None
-        self.cnr = self.calculate_cnr()
+        self.cnr = [self.calculate_cnr(self.slices[0]), None, self.calculate_cnr(self.slices[2])], # input, predicted, ground truth
 
     def get_slice(self):
         scan_entropies = []
@@ -26,10 +25,9 @@ class Image:
             entropy = shannon_entropy(scan_slice)
             scan_entropies.append(entropy)
         max_entropy = max(scan_entropies)
-        self.slice, self.slice_index = self.array[:, :, self.slice_index], scan_entropies.index(max_entropy)
+        self.slice[0], self.slice_index = self.array[:, :, self.slice_index], scan_entropies.index(max_entropy)
     
-    def calculate_cnr(self, image):
-        slice = image.slice
+    def calculate_cnr(self, slice):
         gm = mod(slice, 0.6)
         wm = mod(slice, 0.8)
         gm[gm < 0.445] = 0

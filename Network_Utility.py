@@ -45,18 +45,7 @@ class Network_Utility:
         delta = delta // 2
 
         return tensor[:, :, delta:tensor_size- delta, delta:tensor_size-delta]
-
     @staticmethod
-    def get_slice(scan_tensor):
-        scan_entropies = []
-        for i in tqdm(range(192)):
-            scan_slice = scan_tensor[:, :, i]
-            entropy = skimage.measure.shannon_entropy(scan_slice)
-            scan_entropies.append(entropy)
-        max_entropy = max(scan_entropies)
-        max_entropy_slice_index = scan_entropies.index(max_entropy)
-        return max_entropy_slice_index
-    
     def create_data_splits(dataset_len):
         training_len = int(dataset_len * 0.8)
         validation_len = int((dataset_len - training_len) / 2)
