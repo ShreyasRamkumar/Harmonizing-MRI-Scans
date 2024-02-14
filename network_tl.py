@@ -10,15 +10,17 @@ from Network_Utility import Network_Utility
 from Image import Image
  
 # important folders
-x_directory = "/mri-data/processed_input"
-y_directory = "/mri-data/original"
-yhat_directory = "/mri-data/postprocessed"
+x_directory = "/mri-data/processed_input/"
+y_directory = "/mri-data/original/"
+yhat_directory = "/mri-data/postprocessed/"
 
 class Callbacks(Callback):
     def on_test_end(self, trainer, pl_module):
         outputs = pl_module.testing_outputs
-        sliced_y_hat_list = []
-        
+        sliced_yhats = []
+        data_module = trainer.datamodule
+        testing_split = data_module.testing_split
+
         for i in range(len(outputs)):
             yhat = outputs[i]
             for j in range(4):
@@ -30,25 +32,14 @@ class Callbacks(Callback):
                     sliced_yhat = sliced_yhat.reshape(1, 256, 1, 256)
                 sliced_yhat = sliced_yhat.squeeze(dim=0)
                 print(sliced_yhat.shape)
-                sliced_y_hat_list.append(sliced_yhat)
 
-        for i in range(len(sliced_y_hat_list)):
-            yhat_path = f"{yhat_directory}/{i}.nii"
-            sliced_yhat_tensor = sliced_y_hat_list[i].cpu()
-            sliced_yhat_array = sliced_yhat_tensor.numpy()
-            y_hat_scan = nib.Nifti1Image(sliced_yhat_array, affine=np.eye(4))
-            nib.save(y_hat_scan, yhat_path)
-    
-    def on_test_epoch_start(self, trainer, pl_module):
-        pass
+                sliced_yhat_tensor = sliced_yhat.cpu()
+                sliced_yhat_array = sliced_yhat_tensor.numpy()
+                testing_split[i].add_slice(1, sliced_yhat_array) # <-- THIS SHOULD NOT USE i AS INDEXING VARIABLE BECAUSE i ONLY TRACKS IN BATCHES OF 4, FIGURE OUT WHAT INDEXING VARIABLE SHOULD BE
+                testing_split[i].save_slice(1, yhat_directory) # <-- THIS SHOULD NOT USE i AS INDEXING VARIABLE BECAUSE i ONLY TRACKS IN BATCHES OF 4, FIGURE OUT WHAT INDEXING VARIABLE SHOULD BE
 
-    def on_train_epoch_start(self, trainer, pl_module):
-        pass
-
-    def on_validation_epoch_start(self, trainer, pl_module):
-        pass
-
-    def on_test_epoch_end(self, trainer, pl_module)
+                #PROBLEM: i VARIABLE CURRENTLY REFERS TO OUTPUTS LIST THAT HAS SCANS STORED IN BATCHES OF 4. FIGURE OUT HOW TO ACCESS THEM 1 BY 1
+            
 
 # Model Class
 class Unet(pl.LightningModule):
@@ -164,24 +155,24 @@ class MRIDataModule(pl.LightningDataModule):
 
         self.training_split = self.images[:training_stop_index]
         self.training_dataset = MRIDataset(self.training_split)
-        self.training_dataloader = self.train_dataloader()
+        self.training_dataloader = self.training_dataloader()
 
-        self.testing_split = self.input_files[training_stop_index:testing_stop_index]
+        self.testing_split = self.images[training_stop_index:testing_stop_index]
         self.testing_dataset = MRIDataset(self.testing_split)
-        self.testing_dataloader = self.test_dataloader()
+        self.testing_dataloader = self.testing_dataloader()
 
-        self.validation_split = self.input_files[testing_stop_index:validation_stop_index] 
-        self.validation_dataset = MRIDataset(self.validation_spit)
-        self.validation_dataloader = self.val_dataloader()
+        self.validation_split = self.images[testing_stop_index:validation_stop_index] 
+        self.validation_dataset = MRIDataset(self.validation_split)
+        self.validation_dataloader = self.validation_dataloader()
 
 
-    def train_dataloader(self):
+    def training_dataloader(self):
         return DataLoader(self.training_dataset, batch_size = self.batch_size)
     
-    def test_dataloader(self):
+    def testing_dataloader(self):
         return DataLoader(self.testing_dataset, batch_size = self.batch_size)
     
-    def val_dataloader(self):
+    def validation_dataloader(self):
         return DataLoader(self.validation_dataset, batch_size = self.batch_size)
 
 
@@ -201,7 +192,7 @@ class MRIDataset(Dataset):
 if __name__ == "__main__":
     mri_data = MRIDataModule(batch_size=4)
     model = Unet()
-    saveoutput = SaveOutput()
-    train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[saveoutput])
+    callbacks = Callbacks()
+    train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[callbacks])
     train.fit(model, mri_data)
     train.test(model, mri_data)

@@ -1,5 +1,5 @@
 from numpy.lib.stride_tricks import sliding_window_view
-from numpy import argwhere, mod, asarray, mean, std, array
+from numpy import argwhere, mod, asarray, mean, std, eye
 import nibabel as nib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -33,7 +33,7 @@ class Image:
         except:
             yhat_cnr = 0
         self.cnr = [self.calculate_cnr(self.slices[0]), yhat_cnr, self.calculate_cnr(self.slices[2])], # input, predicted, ground truth
-        
+
     def calculate_cnr(self, slice):
         gm = mod(slice, 0.6)
         wm = mod(slice, 0.8)
@@ -98,3 +98,11 @@ class Image:
             return n_2, (i, j), n_2.shape
         else:
             return None, None, None
+    
+    def save_slice(self, slice_index, directory):
+        slice_nifti = nib.Nifti1Image(self.slices[slice_index], affine=eye(4))
+        nib.save(slice_nifti, directory+self.id+".nii")
+
+    def add_slice(self, slice_index, slice):
+        self.slices[slice_index] = slice
+        self.update_cnr()
