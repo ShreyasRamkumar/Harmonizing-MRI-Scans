@@ -1,5 +1,5 @@
 from numpy.lib.stride_tricks import sliding_window_view
-from numpy import argwhere, mod, asarray, mean, std
+from numpy import argwhere, mod, asarray, mean, std, array
 import nibabel as nib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -26,7 +26,14 @@ class Image:
             scan_entropies.append(entropy)
         max_entropy = max(scan_entropies)
         self.slice[0], self.slice_index = self.array[:, :, self.slice_index], scan_entropies.index(max_entropy)
-    
+
+    def update_cnr(self):
+        try:
+            yhat_cnr = self.calculate_cnr(self.slices[1])
+        except:
+            yhat_cnr = 0
+        self.cnr = [self.calculate_cnr(self.slices[0]), yhat_cnr, self.calculate_cnr(self.slices[2])], # input, predicted, ground truth
+        
     def calculate_cnr(self, slice):
         gm = mod(slice, 0.6)
         wm = mod(slice, 0.8)

@@ -14,7 +14,7 @@ x_directory = "/mri-data/processed_input"
 y_directory = "/mri-data/original"
 yhat_directory = "/mri-data/postprocessed"
 
-class SaveOutput(Callback):
+class Callbacks(Callback):
     def on_test_end(self, trainer, pl_module):
         outputs = pl_module.testing_outputs
         sliced_y_hat_list = []
@@ -38,7 +38,17 @@ class SaveOutput(Callback):
             sliced_yhat_array = sliced_yhat_tensor.numpy()
             y_hat_scan = nib.Nifti1Image(sliced_yhat_array, affine=np.eye(4))
             nib.save(y_hat_scan, yhat_path)
-        
+    
+    def on_test_epoch_start(self, trainer, pl_module):
+        pass
+
+    def on_train_epoch_start(self, trainer, pl_module):
+        pass
+
+    def on_validation_epoch_start(self, trainer, pl_module):
+        pass
+
+    def on_test_epoch_end(self, trainer, pl_module)
 
 # Model Class
 class Unet(pl.LightningModule):
@@ -152,20 +162,16 @@ class MRIDataModule(pl.LightningDataModule):
         testing_stop_index = lens[0] + lens[1]
         validation_stop_index = lens[0] + lens[1] + lens[2] - 1
 
-        self.training = self.images[:training_stop_index]
-        self.training_dataset = MRIDataset(self.training, self.ground_truth_training)
+        self.training_split = self.images[:training_stop_index]
+        self.training_dataset = MRIDataset(self.training_split)
         self.training_dataloader = self.train_dataloader()
 
-        self.testing = self.input_files[training_stop_index:testing_stop_index]
-        self.ground_truth_testing = self.ground_truth_files[training_stop_index:testing_stop_index]  
-
-        self.testing_dataset = MRIDataset(self.testing, self.ground_truth_testing)
+        self.testing_split = self.input_files[training_stop_index:testing_stop_index]
+        self.testing_dataset = MRIDataset(self.testing_split)
         self.testing_dataloader = self.test_dataloader()
 
-        self.validation = self.input_files[testing_stop_index:validation_stop_index] 
-        self.ground_truth_validation = self.ground_truth_files[testing_stop_index:validation_stop_index]
-
-        self.validation_dataset = MRIDataset(self.validation, self.ground_truth_validation)
+        self.validation_split = self.input_files[testing_stop_index:validation_stop_index] 
+        self.validation_dataset = MRIDataset(self.validation_spit)
         self.validation_dataloader = self.val_dataloader()
 
 
@@ -185,27 +191,11 @@ class MRIDataset(Dataset):
         self.images = images
 
     def __len__(self):
-        return len(self.model_input)
+        return len(self.images)
 
     def __getitem__(self, index):
-        scan_path = self.model_input[index]
-        intermediate_scan_list = os.listdir(f"{model_input_path}/{scan_path}/anat/")
-        scan = nib.load(f"{model_input_path}/{scan_path}/anat/{intermediate_scan_list[0]}")
-        scan_array = scan.get_fdata()
-        scan_tensor = torch.tensor(scan_array, dtype=torch.float32)
-        slice_index = Network_Utility.get_slice(scan_tensor=scan_tensor)
-        scan_slice = scan_tensor[:, :, slice_index]
-        scan_slice = scan_slice[None, :, :]
-
-        ground_truth_scan_path = self.ground_truth[index]
-        intermediate_scan_list = os.listdir(f"{model_input_path}/{ground_truth_scan_path}/anat/")
-        ground_truth_scan = nib.load(f"{model_input_path}/{ground_truth_scan_path}/anat/{intermediate_scan_list[0]}")
-        ground_truth_scan_array = ground_truth_scan.get_fdata()
-        ground_truth_scan_tensor = torch.tensor(ground_truth_scan_array, dtype=torch.float32)
-        ground_truth_scan_slice = ground_truth_scan_tensor[:, :, slice_index]
-        ground_truth_scan_slice = ground_truth_scan_slice[None, :, :]
-
-        return {"scan": scan_slice, "ground_truth": ground_truth_scan_slice}
+        image = self.images[index]
+        return {"scan": image.slices[0], "ground_truth": image.slices[2]}
 
 
 if __name__ == "__main__":

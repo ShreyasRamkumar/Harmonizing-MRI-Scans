@@ -1,6 +1,11 @@
 from torch import optim, nn
 
 class Network_Utility:
+    @staticmethod
+    def cnr_diff():
+        return 
+
+    def save_cnr(y_slice, id)
 
     @staticmethod
     def convolution(in_c, out_c):
