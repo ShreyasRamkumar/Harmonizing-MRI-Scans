@@ -1,11 +1,35 @@
-from torch import optim, nn
+from torch import optim, nn, ones, sqrt, mean
 
 class Network_Utility:
     @staticmethod
-    def cnr_diff():
-        return 
+    def ssim(img1, img2, window_size=11, sigma=1.5):
+        # Constants for numerical stability
+        C1 = (0.01 * 255) ** 2
+        C2 = (0.03 * 255) ** 2
 
-    def save_cnr(y_slice, id)
+        # Data normalization
+        mean1 = nn.conv2d(img1, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2)
+        mean2 = nn.conv2d(img2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2)
+        mean_sq1 = mean1 ** 2
+        mean_sq2 = mean2 ** 2
+        mean12 = mean1 * mean2
+
+        var1 = nn.conv2d(img1 ** 2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean_sq1
+        var2 = nn.conv2d(img2 ** 2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean_sq2
+        covar12 = nn.conv2d(img1 * img2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean12
+
+        # SSIM components
+        luminance = (2 * mean12 + C1) / (mean_sq1 + mean_sq2 + C1)
+        contrast = (2 * sqrt(var1) * sqrt(var2) + C2) / (var1 + var2 + C2)
+        structure = (covar12 + C2 / 2) / (sqrt(var1) * sqrt(var2) + C2 / 2)
+
+        # SSIM index
+        ssim_index = luminance * contrast * structure
+
+        # Average over spatial dimensions
+        ssim_value = mean(ssim_index, dim=(2, 3))
+
+        return 1 / ssim_value
 
     @staticmethod
     def convolution(in_c, out_c):

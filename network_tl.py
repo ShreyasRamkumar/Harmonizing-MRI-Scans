@@ -35,11 +35,8 @@ class Callbacks(Callback):
 
                 sliced_yhat_tensor = sliced_yhat.cpu()
                 sliced_yhat_array = sliced_yhat_tensor.numpy()
-                testing_split[i].add_slice(1, sliced_yhat_array) # <-- THIS SHOULD NOT USE i AS INDEXING VARIABLE BECAUSE i ONLY TRACKS IN BATCHES OF 4, FIGURE OUT WHAT INDEXING VARIABLE SHOULD BE
-                testing_split[i].save_slice(1, yhat_directory) # <-- THIS SHOULD NOT USE i AS INDEXING VARIABLE BECAUSE i ONLY TRACKS IN BATCHES OF 4, FIGURE OUT WHAT INDEXING VARIABLE SHOULD BE
-
-                #PROBLEM: i VARIABLE CURRENTLY REFERS TO OUTPUTS LIST THAT HAS SCANS STORED IN BATCHES OF 4. FIGURE OUT HOW TO ACCESS THEM 1 BY 1
-            
+                testing_split[(i*4)+j].add_slice(1, sliced_yhat_array)
+                testing_split[(i*4)+j].save_slice(1, yhat_directory) 
 
 # Model Class
 class Unet(pl.LightningModule):
@@ -47,7 +44,7 @@ class Unet(pl.LightningModule):
         super().__init__()
         # hyperparameters
         self.learning_rate = learning_rate
-        self.criterion = nn.MSELoss()
+        self.criterion = Network_Utility.ssim()
         self.testing_outputs = []
         self.validation_outputs = []
         
