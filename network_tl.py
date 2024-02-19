@@ -139,7 +139,7 @@ class MRIDataModule(pl.LightningDataModule):
         self.training = []
         self.testing = []
         self.validation = []
-        self.images = [Image(x_image=f"{x_directory}{i}/anat/{i}.nii", y_image=f"{y_directory}{i}/anat/{i}.nii") for i in os.listdir(x_directory)]
+        self.images = [Image(id=i, x_image=f"{x_directory}{i}/anat/{i}.nii", y_image=f"{y_directory}{i}/anat/{i}.nii") for i in os.listdir(x_directory)]
 
     def setup(self, stage: str):
         # set up training, testing, validation split
