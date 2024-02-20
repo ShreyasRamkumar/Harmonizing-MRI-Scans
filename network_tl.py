@@ -10,9 +10,9 @@ from Network_Utility import Network_Utility
 from Image import Image
  
 # important folders
-x_directory = "/home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data/processed_input" # CHANGE FOR WHEN USING JENKINS
-y_directory = "/home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data/ground_truth" # CHANGE FOR WHEN USING JENKINS
-yhat_directory = "/home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data/postprocessed" # CHANGE FOR WHEN USING JENKINS
+x_directory = "/home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data/processed_input/" # CHANGE FOR WHEN USING JENKINS
+y_directory = "/home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data/ground_truth/" # CHANGE FOR WHEN USING JENKINS
+yhat_directory = "/home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data/postprocessed/" # CHANGE FOR WHEN USING JENKINS
 
 class Callbacks(Callback):
     def on_test_end(self, trainer, pl_module):

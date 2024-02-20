@@ -20,12 +20,13 @@ class Image:
 
     def get_slice(self):
         scan_entropies = []
-        for i in tqdm(range(256)):
-            scan_slice = self.array[:, :, i]
+        image_array = self.nifti[0].get_fdata()
+        for i in tqdm(range(192)):
+            scan_slice = image_array[:, :, i]
             entropy = shannon_entropy(scan_slice)
             scan_entropies.append(entropy)
         max_entropy = max(scan_entropies)
-        self.slice[0], self.slice_index = self.array[:, :, self.slice_index], scan_entropies.index(max_entropy)
+        self.slices[0], self.slice_index = image_array[:, :, scan_entropies.index(max_entropy)], scan_entropies.index(max_entropy) # ERROR WITH ACCESSING INDEX
 
     def update_cnr(self):
         try:
