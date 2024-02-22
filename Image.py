@@ -4,29 +4,29 @@ import nibabel as nib
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from skimage.measure import shannon_entropy
+import torch
 
 class Image:
     def __init__(self, x_image, y_image, id):
         self.id = id
-        xhat_image = None
-        self.nifti = [nib.load(x_image), xhat_image, nib.load(y_image)] # input, predicted, ground truth
-        
+        self.nifti = {"x": nib.load(x_image), "y_hat": 0, "y": nib.load(y_image)} # input, predicted, ground truth
         self.slice_index = 0
-        self.slices = [] # input, predicted, ground truth
+        self.slices = {"x": 0, "y_hat": 0, "y": 0} # input, predicted, ground truth
         self.get_slice()
-        self.slices.extend([None, self.nifti[2].get_fdata()[:, :, self.slice_index]])
+        self.slices.update({"y_hat": 0, "y": self.nifti["y"].get_fdata()[:, :, self.slice_index]})
 
-        self.cnr = [self.calculate_cnr(self.slices[0]), None, self.calculate_cnr(self.slices[2])], # input, predicted, ground truth
+        self.cnr = [self.calculate_cnr(self.slices["x"]), None, self.calculate_cnr(self.slices["y"])], # input, predicted, ground truth
 
     def get_slice(self):
         scan_entropies = []
-        image_array = self.nifti[0].get_fdata()
+        scan_array = self.nifti["x"].get_fdata()
         for i in tqdm(range(192)):
-            scan_slice = image_array[:, :, i]
+            scan_slice = scan_array[:, :, i]
             entropy = shannon_entropy(scan_slice)
             scan_entropies.append(entropy)
         max_entropy = max(scan_entropies)
-        self.slices[0], self.slice_index = image_array[:, :, scan_entropies.index(max_entropy)], scan_entropies.index(max_entropy) # ERROR WITH ACCESSING INDEX
+        self.slice_index = scan_entropies.index(max_entropy)
+        self.slices["x"] = scan_array[:, :, self.slice_index]
 
     def update_cnr(self):
         try:
@@ -107,3 +107,7 @@ class Image:
     def add_slice(self, slice_index, slice):
         self.slices[slice_index] = slice
         self.update_cnr()
+
+
+if __name__ == "__main__":
+    image = Image(x_image="./data/processed_input/sub-CC610022/anat/sub-CC610022.nii", y_image="./data/ground_truth/sub-CC610022/anat/sub-CC610022.nii", id='a')
