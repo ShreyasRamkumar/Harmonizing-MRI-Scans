@@ -15,7 +15,7 @@ class Image:
         self.get_slice()
         self.slices.update({"y_hat": 0, "y": self.nifti["y"].get_fdata()[:, :, self.slice_index]})
 
-        self.cnr = [self.calculate_cnr(self.slices["x"]), None, self.calculate_cnr(self.slices["y"])], # input, predicted, ground truth
+        self.cnr = [self.calculate_cnr(self.slices["x"]), 0, self.calculate_cnr(self.slices["y"])], # input, predicted, ground truth
 
     def get_slice(self):
         scan_entropies = []
