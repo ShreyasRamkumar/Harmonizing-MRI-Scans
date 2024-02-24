@@ -1,4 +1,7 @@
 from torch import optim, nn, ones, sqrt, mean
+import torch.nn.functional as F
+from tqdm import tqdm
+import skimage
 
 class Network_Utility:
     @staticmethod
@@ -7,16 +10,20 @@ class Network_Utility:
         C1 = (0.01 * 255) ** 2
         C2 = (0.03 * 255) ** 2
 
+        # Move images to the same device
+        device = img1.device
+        img2 = img2.to(device)
+
         # Data normalization
-        mean1 = nn.conv2d(img1, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2)
-        mean2 = nn.conv2d(img2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2)
+        mean1 = F.conv2d(img1, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2)
+        mean2 = F.conv2d(img2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2)
         mean_sq1 = mean1 ** 2
         mean_sq2 = mean2 ** 2
         mean12 = mean1 * mean2
 
-        var1 = nn.conv2d(img1 ** 2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean_sq1
-        var2 = nn.conv2d(img2 ** 2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean_sq2
-        covar12 = nn.conv2d(img1 * img2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean12
+        var1 = F.conv2d(img1 ** 2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean_sq1
+        var2 = F.conv2d(img2 ** 2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean_sq2
+        covar12 = F.conv2d(img1 * img2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean12
 
         # SSIM components
         luminance = (2 * mean12 + C1) / (mean_sq1 + mean_sq2 + C1)
@@ -74,8 +81,20 @@ class Network_Utility:
         delta = delta // 2
 
         return tensor[:, :, delta:tensor_size- delta, delta:tensor_size-delta]
+    
     @staticmethod
     def create_data_splits(dataset_len):
         training_len = int(dataset_len * 0.8)
         validation_len = int((dataset_len - training_len) / 2)
         return [training_len, validation_len, validation_len]
+    
+    @staticmethod
+    def get_slice(scan_tensor):
+        scan_entropies = []
+        for i in tqdm(range(192)):
+            scan_slice = scan_tensor[:, :, i]
+            entropy = skimage.measure.shannon_entropy(scan_slice)
+            scan_entropies.append(entropy)
+        max_entropy = max(scan_entropies)
+        max_entropy_slice_index = scan_entropies.index(max_entropy)
+        return max_entropy_slice_index

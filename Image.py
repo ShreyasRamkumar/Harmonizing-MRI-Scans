@@ -13,9 +13,9 @@ class Image:
         self.slice_index = 0
         self.slices = {"x": 0, "y_hat": 0, "y": 0} # input, predicted, ground truth
         self.get_slice()
-        self.slices.update({"y_hat": 0, "y": self.nifti["y"].get_fdata()[:, :, self.slice_index]})
+        self.slices.update({"y": self.nifti["y"].get_fdata()[:, :, self.slice_index]})
 
-        self.cnr = [self.calculate_cnr(self.slices["x"]), 0, self.calculate_cnr(self.slices["y"])], # input, predicted, ground truth
+        # self.cnr = [self.calculate_cnr(self.slices["x"]), 0, self.calculate_cnr(self.slices["y"])], # input, predicted, ground truth
 
     def get_slice(self):
         scan_entropies = []
@@ -39,7 +39,7 @@ class Image:
         gm = mod(slice, 0.6)
         wm = mod(slice, 0.8)
         gm[gm < 0.445] = 0
-        wm[wm < 0.58] = 0
+        wm[wm < 0.50] = 0
 
         n1_indices = [i[1] for i in self.define_n1(gm, 0.4)]
         n2_indices = self.define_n2(wm, 0.6)[1]

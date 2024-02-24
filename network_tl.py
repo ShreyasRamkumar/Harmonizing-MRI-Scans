@@ -7,7 +7,8 @@ import nibabel as nib
 import numpy as np
 from lightning.pytorch.callbacks import Callback
 from Network_Utility import Network_Utility
-from Image import Image
+from torchmetrics.image import StructuralSimilarityIndexMeasure
+
  
 # important folders
 x_directory = "/home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans/data/processed_input/" # CHANGE FOR WHEN USING JENKINS
@@ -17,9 +18,8 @@ yhat_directory = "/home/ramkumars@acct.upmchs.net/Projects/Harmonizing-MRI-Scans
 class Callbacks(Callback):
     def on_test_end(self, trainer, pl_module):
         outputs = pl_module.testing_outputs
-        data_module = trainer.datamodule
-        testing_split = data_module.testing_split
-
+        sliced_yhat_list = []
+        
         for i in range(len(outputs)):
             yhat = outputs[i]
             for j in range(4):
@@ -31,11 +31,14 @@ class Callbacks(Callback):
                     sliced_yhat = sliced_yhat.reshape(1, 256, 1, 256)
                 sliced_yhat = sliced_yhat.squeeze(dim=0)
                 print(sliced_yhat.shape)
+                sliced_yhat_list.append(sliced_yhat)
 
-                sliced_yhat_tensor = sliced_yhat.cpu()
-                sliced_yhat_array = sliced_yhat_tensor.numpy()
-                testing_split[(i*4)+j].add_slice(1, sliced_yhat_array)
-                testing_split[(i*4)+j].save_slice(1, yhat_directory) 
+        for i in range(len(sliced_yhat_list)):
+            y_hat_path = f"{yhat_directory}/{i}.nii"
+            sliced_y_hat_tensor = sliced_yhat_list[i].cpu()
+            sliced_y_hat_array = sliced_y_hat_tensor.numpy()
+            y_hat_scan = nib.Nifti1Image(sliced_y_hat_array, affine=np.eye(4))
+            nib.save(y_hat_scan, y_hat_path)
 
 # Model Class
 class Unet(pl.LightningModule):
@@ -43,7 +46,7 @@ class Unet(pl.LightningModule):
         super().__init__()
         # hyperparameters
         self.learning_rate = learning_rate
-        self.criterion = Network_Utility.ssim()
+        self.criterion = StructuralSimilarityIndexMeasure(data_range=1.0)
         self.testing_outputs = []
         self.validation_outputs = []
         
@@ -108,7 +111,7 @@ class Unet(pl.LightningModule):
         x = train_batch["scan"]
         y = train_batch["ground_truth"]
         y_hat = self.forward(x)
-        loss = self.criterion(y_hat, y)
+        loss = 1 / self.criterion(y_hat, y)
         self.log("train_loss", loss, on_epoch=True)
         return loss
     
@@ -137,56 +140,83 @@ class MRIDataModule(pl.LightningDataModule):
         super().__init__()
         self.batch_size = batch_size
         self.training = []
+        self.ground_truth_training = []
         self.testing = []
+        self.ground_truth_testing = []
         self.validation = []
-        self.images = [Image(id=i, x_image=f"{x_directory}{i}/anat/{i}.nii", y_image=f"{y_directory}{i}/anat/{i}.nii") for i in os.listdir(x_directory)]
+        self.ground_truth_validation = []
+        self.input_files = os.listdir(x_directory)
+        self.ground_truth_files = os.listdir(y_directory)
 
     def setup(self, stage: str):
         # set up training, testing, validation split
         
-        lens = Network_Utility.create_data_splits(len(self.images))
+        lens = Network_Utility.create_data_splits(len(self.input_files))
         training_stop_index = lens[0]
         testing_stop_index = lens[0] + lens[1]
         validation_stop_index = lens[0] + lens[1] + lens[2] - 1
 
-        self.training_split = self.images[:training_stop_index]
-        self.training_dataset = MRIDataset(self.training_split)
-        self.training_dataloader = self.training_dataloader()
+        self.training = self.input_files[:training_stop_index]
+        self.ground_truth_training = self.ground_truth_files[:training_stop_index]
 
-        self.testing_split = self.images[training_stop_index:testing_stop_index]
-        self.testing_dataset = MRIDataset(self.testing_split)
-        self.testing_dataloader = self.testing_dataloader()
+        self.training_dataset = MRIDataset(self.training, self.ground_truth_training)
+        self.training_dataloader = self.train_dataloader()
 
-        self.validation_split = self.images[testing_stop_index:validation_stop_index] 
-        self.validation_dataset = MRIDataset(self.validation_split)
-        self.validation_dataloader = self.validation_dataloader()
+        self.testing = self.input_files[training_stop_index:testing_stop_index]
+        self.ground_truth_testing = self.ground_truth_files[training_stop_index:testing_stop_index]  
+
+        self.testing_dataset = MRIDataset(self.testing, self.ground_truth_testing)
+        self.testing_dataloader = self.test_dataloader()
+
+        self.validation = self.input_files[testing_stop_index:validation_stop_index] 
+        self.ground_truth_validation = self.ground_truth_files[testing_stop_index:validation_stop_index]
+
+        self.validation_dataset = MRIDataset(self.validation, self.ground_truth_validation)
+        self.validation_dataloader = self.val_dataloader()
 
 
-    def training_dataloader(self):
+    def train_dataloader(self):
         return DataLoader(self.training_dataset, batch_size = self.batch_size)
     
-    def testing_dataloader(self):
+    def test_dataloader(self):
         return DataLoader(self.testing_dataset, batch_size = self.batch_size)
     
-    def validation_dataloader(self):
+    def val_dataloader(self):
         return DataLoader(self.validation_dataset, batch_size = self.batch_size)
 
 
 class MRIDataset(Dataset):
-    def __init__(self, images: list=[]):
+    def __init__(self, model_input: list = [], ground_truth: list = []):
         super().__init__()
-        self.images = images
+        self.model_input = model_input
+        self.ground_truth = ground_truth
 
     def __len__(self):
-        return len(self.images)
+        return len(self.model_input)
 
     def __getitem__(self, index):
-        image = self.images[index]
-        return {"scan": image.slices[0], "ground_truth": image.slices[2]}
+        scan_path = self.model_input[index]
+        intermediate_scan_list = os.listdir(f"{x_directory}/{scan_path}/anat/")
+        scan = nib.load(f"{x_directory}/{scan_path}/anat/{intermediate_scan_list[0]}")
+        scan_array = scan.get_fdata()
+        scan_tensor = torch.tensor(scan_array, dtype=torch.float32)
+        slice_index = Network_Utility.get_slice(scan_tensor=scan_tensor)
+        scan_slice = scan_tensor[:, :, slice_index]
+        scan_slice = scan_slice[None, :, :]
+
+        ground_truth_scan_path = self.ground_truth[index]
+        intermediate_scan_list = os.listdir(f"{x_directory}/{ground_truth_scan_path}/anat/")
+        ground_truth_scan = nib.load(f"{x_directory}/{ground_truth_scan_path}/anat/{intermediate_scan_list[0]}")
+        ground_truth_scan_array = ground_truth_scan.get_fdata()
+        ground_truth_scan_tensor = torch.tensor(ground_truth_scan_array, dtype=torch.float32)
+        ground_truth_scan_slice = ground_truth_scan_tensor[:, :, slice_index]
+        ground_truth_scan_slice = ground_truth_scan_slice[None, :, :]
+
+        return {"scan": scan_slice, "ground_truth": ground_truth_scan_slice}
 
 
 if __name__ == "__main__":
-    mri_data = MRIDataModule(batch_size=4)
+    mri_data = MRIDataModule(batch_size=2)
     model = Unet()
     callbacks = Callbacks()
     train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[callbacks])
