@@ -111,7 +111,7 @@ class Unet(pl.LightningModule):
         x = train_batch["scan"]
         y = train_batch["ground_truth"]
         y_hat = self.forward(x)
-        loss = 1 / self.criterion(y_hat, y)
+        loss = -1 * self.criterion(y_hat, y)
         self.log("train_loss", loss, on_epoch=True)
         return loss
     
@@ -216,7 +216,7 @@ class MRIDataset(Dataset):
 
 
 if __name__ == "__main__":
-    mri_data = MRIDataModule(batch_size=2)
+    mri_data = MRIDataModule(batch_size=4)
     model = Unet()
     callbacks = Callbacks()
     train = pl.Trainer(max_epochs=200, accelerator="gpu", devices=1, callbacks=[callbacks])
