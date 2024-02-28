@@ -46,7 +46,7 @@ class Unet(pl.LightningModule):
         super().__init__()
         # hyperparameters
         self.learning_rate = learning_rate
-        self.criterion = StructuralSimilarityIndexMeasure(data_range=1.0)
+        self.criterion = nn.MSELoss()
         self.testing_outputs = []
         self.validation_outputs = []
         
@@ -111,7 +111,7 @@ class Unet(pl.LightningModule):
         x = train_batch["scan"]
         y = train_batch["ground_truth"]
         y_hat = self.forward(x)
-        loss = -1 * self.criterion(y_hat, y)
+        loss = self.criterion(y_hat, y)
         self.log("train_loss", loss, on_epoch=True)
         return loss
     
