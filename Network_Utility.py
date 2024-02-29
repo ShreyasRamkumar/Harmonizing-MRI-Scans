@@ -1,43 +1,21 @@
-from torch import optim, nn, ones, sqrt, mean
+from torch import optim, nn, ones, sqrt, mean, std, abs
 import torch.nn.functional as F
 from tqdm import tqdm
 import skimage
 
 class Network_Utility:
     @staticmethod
-    def ssim(img1, img2, window_size=11, sigma=1.5):
-        # Constants for numerical stability
-        C1 = (0.01 * 255) ** 2
-        C2 = (0.03 * 255) ** 2
+    
+    def contrast_loss(y_true, y_pred):
+        # Calculate the standard deviation of pixel intensities for the ground truth and predicted MRI scans
+        std_true = std(y_true)
+        std_pred = std(y_pred)
 
-        # Move images to the same device
-        device = img1.device
-        img2 = img2.to(device)
+        # Calculate the contrast loss as the absolute difference in standard deviations
+        contrast_loss = abs(std_true - std_pred)
 
-        # Data normalization
-        mean1 = F.conv2d(img1, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2)
-        mean2 = F.conv2d(img2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2)
-        mean_sq1 = mean1 ** 2
-        mean_sq2 = mean2 ** 2
-        mean12 = mean1 * mean2
-
-        var1 = F.conv2d(img1 ** 2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean_sq1
-        var2 = F.conv2d(img2 ** 2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean_sq2
-        covar12 = F.conv2d(img1 * img2, ones(1, 1, window_size, window_size) / window_size ** 2, padding=window_size // 2) - mean12
-
-        # SSIM components
-        luminance = (2 * mean12 + C1) / (mean_sq1 + mean_sq2 + C1)
-        contrast = (2 * sqrt(var1) * sqrt(var2) + C2) / (var1 + var2 + C2)
-        structure = (covar12 + C2 / 2) / (sqrt(var1) * sqrt(var2) + C2 / 2)
-
-        # SSIM index
-        ssim_index = luminance * contrast * structure
-
-        # Average over spatial dimensions
-        ssim_value = mean(ssim_index, dim=(2, 3))
-
-        return 1 / ssim_value
-
+        return contrast_loss
+    
     @staticmethod
     def convolution(in_c, out_c):
         run = nn.Sequential(

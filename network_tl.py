@@ -46,7 +46,7 @@ class Unet(pl.LightningModule):
         super().__init__()
         # hyperparameters
         self.learning_rate = learning_rate
-        self.criterion = nn.MSELoss()
+        self.criterion = Network_Utility.contrast_loss
         self.testing_outputs = []
         self.validation_outputs = []
         
@@ -111,7 +111,7 @@ class Unet(pl.LightningModule):
         x = train_batch["scan"]
         y = train_batch["ground_truth"]
         y_hat = self.forward(x)
-        loss = self.criterion(y_hat, y)
+        loss = self.criterion(y, y_hat)
         self.log("train_loss", loss, on_epoch=True)
         return loss
     
