@@ -2,20 +2,22 @@ from torch import optim, nn, ones, sqrt, mean, std, abs
 import torch.nn.functional as F
 from tqdm import tqdm
 import skimage
+from ignite.metrics import PSNR
 
 class Network_Utility:
     @staticmethod
-    
     def contrast_loss(y_true, y_pred):
-        # Calculate the standard deviation of pixel intensities for the ground truth and predicted MRI scans
         std_true = std(y_true)
         std_pred = std(y_pred)
-
-        # Calculate the contrast loss as the absolute difference in standard deviations
         contrast_loss = abs(std_true - std_pred)
 
         return contrast_loss
     
+    @staticmethod
+    def psnr_difference(y_pred, y):
+        psnr = PSNR(data_range=1.0)
+        y_psnr = psnr.compute()
+
     @staticmethod
     def convolution(in_c, out_c):
         run = nn.Sequential(
