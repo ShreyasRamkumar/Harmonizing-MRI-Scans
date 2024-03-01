@@ -47,7 +47,7 @@ class Unet(pl.LightningModule):
         super().__init__()
         # hyperparameters
         self.learning_rate = learning_rate
-        self.criterion = PSNR()
+        self.criterion = PSNR(data_range=1.0)
         self.testing_outputs = []
         self.validation_outputs = []
         
