@@ -8,6 +8,7 @@ import numpy as np
 from lightning.pytorch.callbacks import Callback
 from Network_Utility import Network_Utility
 from torchmetrics.image import StructuralSimilarityIndexMeasure
+from ignite.metrics import PSNR
 
  
 # important folders
@@ -46,7 +47,7 @@ class Unet(pl.LightningModule):
         super().__init__()
         # hyperparameters
         self.learning_rate = learning_rate
-        self.criterion = Network_Utility.contrast_loss
+        self.criterion = PSNR()
         self.testing_outputs = []
         self.validation_outputs = []
         
@@ -111,7 +112,7 @@ class Unet(pl.LightningModule):
         x = train_batch["scan"]
         y = train_batch["ground_truth"]
         y_hat = self.forward(x)
-        loss = self.criterion(y, y_hat)
+        loss = self.criterion(y_hat, y)
         self.log("train_loss", loss, on_epoch=True)
         return loss
     
