@@ -22,3 +22,4 @@ weights/
 *.nii.gz
 *.txt
 *.png
+logs/

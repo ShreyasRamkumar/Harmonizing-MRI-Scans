@@ -1,15 +1,17 @@
 Jenkinsfile (Declarative Pipeline)
 pipeline {
-    agent any
+    agent {
+        docker { image 'shreyasramkumar/harmonizing-mri-scans'}
+    }
     stages {
         stage('Build') {
             steps {
-                echo 'Building..'
+                echo 'Building...'
             }
         }
         stage('Test') {
             steps {
-                echo 'Testing..'
+                echo 'Testing...'                
             }
         }
         stage('Deploy') {
